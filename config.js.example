@@ -3,7 +3,7 @@
    app registration. A client ID is a public identifier, not a credential —
    this app is a public client with no secret; PKCE protects the token exchange.
 
-   For wantnot-audit (audit.wantnot.nunan.com) the production config.js is
+   For wantnot-audit (audit.wantnot.ebbwater.net) the production config.js is
    generated at deploy time from the GitHub secret AUDIT_CLIENT_ID — it is
    not committed. Forks should run tools/create_audit_app.sh (or infra/05-audit-app.sh
    equivalent) to create their own multi-tenant app registration.
@@ -12,5 +12,5 @@
    then sign-in is locked to that tenant; URL ?tenant= overrides it.
 */
 window.WANTNOT_AUDIT_CLIENT_ID = 'REPLACE_ME';
-window.WANTNOT_API_BASE = 'https://func-wantnot-4dc52f.azurewebsites.net'; // or https://wantnot.nunan.com for custom domain
+window.WANTNOT_API_BASE = 'https://func-wantnot-4dc52f.azurewebsites.net'; // or https://wantnot.ebbwater.net for the custom domain
 // Optional: window.WANTNOT_AUDIT_TENANT = 'your-tenant-guid';

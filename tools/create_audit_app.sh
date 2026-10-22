@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Create the Entra app registration for audit.wantnot.nunan.com (delegated, public client).
+# Create the Entra app registration for the audit origin (delegated, public client).
 # Adapted from wantnot/infra/05-audit-app.sh for the standalone audit repo.
 #
 # Usage:
 #   ./tools/create_audit_app.sh                 # uses AUDIT_HOST, RG, SWA_NAME defaults
-#   AUDIT_HOST=audit.wantnot.nunan.com ./tools/create_audit_app.sh
+#   AUDIT_HOST=audit.wantnot.ebbwater.net ./tools/create_audit_app.sh
 #   AUDIT_HOST=localhost RG=rg-wantnot SWA_NAME=swa-audit ./tools/create_audit_app.sh
 #
 # For forks: set AUDIT_HOST to your own host (e.g. audit.example.com) before running.
@@ -17,7 +17,7 @@ fi
 
 RG="${RG:-rg-wantnot}"
 APP_NAME="${AUDIT_APP_NAME:-WantNot Instant Audit}"
-AUDIT_HOST="${AUDIT_HOST:-audit.wantnot.nunan.com}"
+AUDIT_HOST="${AUDIT_HOST:-audit.wantnot.ebbwater.net}"
 
 # Optional: resolve SWA hostname for wantnot parity check (not required for audit standalone)
 SWA_NAME="${SWA_NAME:-}"

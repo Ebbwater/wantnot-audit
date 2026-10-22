@@ -4,7 +4,7 @@
     "exclude": ["/config.js", "/site.webmanifest", "/brand/*"]
   },
   "globalHeaders": {
-    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://alcdn.msauth.net https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://func-wantnot-4dc52f.azurewebsites.net https://wantnot.nunan.com https://*.azurewebsites.net; frame-src https://login.microsoftonline.com; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://alcdn.msauth.net https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://func-wantnot-4dc52f.azurewebsites.net https://wantnot.ebbwater.net https://*.azurewebsites.net; frame-src https://login.microsoftonline.com; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com",
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin",
