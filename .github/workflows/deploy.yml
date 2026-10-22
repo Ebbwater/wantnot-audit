@@ -94,7 +94,7 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.action != 'closed'
     needs: checks
     runs-on: ubuntu-latest
-    name: Build and deploy (audit.wantnot.nunan.com)
+    name: Build and deploy (audit.wantnot.ebbwater.net)
     outputs:
       preview_url: ${{ steps.swa.outputs.static_web_app_url }}
     steps:

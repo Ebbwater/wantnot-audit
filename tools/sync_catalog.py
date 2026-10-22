@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate frontend catalog assets from skus.json single source.
 
-WantNot Instant Audit (audit.wantnot.nunan.com) is static-only — no Python
+WantNot Instant Audit (audit.wantnot.ebbwater.net) is static-only — no Python
 runtime. skus.json is the single source for SKU names/prices, kinds, and
 palette. This script renders the three generated front-end files from it and
 doubles as the drift gate for CI.

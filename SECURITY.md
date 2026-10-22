@@ -2,7 +2,7 @@
 
 ## What this repo does
 
-WantNot Instant Audit (`https://audit.wantnot.nunan.com`, SWA `swa-wantnot-audit` `brave-ground-0ca79031e.7.azurestaticapps.net`, `CNAME audit → azurestaticapps.net`) is **static-only**. No backend, no database, no queue, no storage. All analysis runs in the visitor's browser (`audit_logic.js` — port of `kylernunan/wantnot:shared/analyzer.py`, parity via `fixtures/parity_fixtures.json`) calling Microsoft Graph directly with a delegated token. Closing the tab ends the session (`sessionStorage`). `https://wantnot.nunan.com/audit` is a permanent 301 here. Code is MIT, brand (`brand/*`) proprietary per `BRAND_LICENSE.md`.
+WantNot Instant Audit (`https://audit.wantnot.ebbwater.net`, SWA `swa-wantnot-audit` `brave-ground-0ca79031e.7.azurestaticapps.net`) is **static-only**. No backend, no database, no queue, no storage. All analysis runs in the visitor's browser (`audit_logic.js` — port of `kylernunan/wantnot:shared/analyzer.py`, parity via `fixtures/parity_fixtures.json`) calling Microsoft Graph directly with a delegated token. Closing the tab ends the session (`sessionStorage`). `https://wantnot.ebbwater.net/audit` is a permanent 301 to this origin. Code is MIT, brand (`brand/*`) proprietary per `BRAND_LICENSE.md`.
 
 ## Threat model
 
