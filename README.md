@@ -37,6 +37,8 @@ Every finding carries its evidence (sku, seats, dollar figure, UPN) and a stable
 
 ---
 
+CSV imports accept `.csv` names (case-insensitive) with CSV, plain-text, Excel CSV or absent browser MIME metadata. Both selected files are validated before either is read; unsupported types show an inline error. File metadata is only an admission check: the existing CSV/header parser and projected-column allowlists still determine supported content. No upload endpoint is involved.
+
 ## Scopes
 
 | Delegated scope | Why |
