@@ -11,7 +11,7 @@ WantNot Instant Audit (`https://audit.wantnot.ebbwater.net`, SWA `swa-wantnot-au
 
 ## Reporting a vulnerability
 
-Email **hello@ebbwater.net**. Include steps to reproduce, impacted route, and whether it requires a signed-in Graph session. We aim to acknowledge within 48 hours.
+Email **admin@ebbwater.net**. Include steps to reproduce, impacted route, and whether it requires a signed-in Graph session. We aim to acknowledge within 48 hours.
 
 ## Out of scope
 
