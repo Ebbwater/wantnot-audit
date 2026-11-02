@@ -23,4 +23,4 @@ These are **not** under the MIT License in `LICENSE`. The MIT license applies to
 
 Replace `brand/*` and the `og-image.png` reference in `index.html:17` with your own brand. Remove or replace the header glyph (`index.html` `.brand .glyph` — the sliced bar) if you rebrand.
 
-Questions: kyler@nunan.com — same contact as the operating company; brand permission is a short email, not a negotiation.
+Questions: hello@ebbwater.net, the Ebbwater LLC contact address. Brand permission is a short email, not a negotiation.
