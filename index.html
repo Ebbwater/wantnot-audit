@@ -916,7 +916,17 @@ function runImport(usersText, licText, tenantLabel){
   return r;
 }
 
+// Picker hints are advisory: validate both files before reading any bytes.
+function validateCsvFile(f) {
+  const mime = (f.type || '').split(';')[0].trim().toLowerCase();
+  const allowed = ['', 'text/csv', 'application/csv', 'text/plain', 'application/vnd.ms-excel'];
+  if (!/\.csv$/i.test(f.name || '') || !allowed.includes(mime)) {
+    throw new Error('Choose CSV exports (.csv files) for both users and licences.');
+  }
+}
+
 const readFile = f => new Promise((res, rej) => {
+  validateCsvFile(f);
   const fr = new FileReader();
   fr.onload = () => res(String(fr.result || ''));
   fr.onerror = () => rej(new Error('Could not read ' + f.name + '.'));
@@ -932,6 +942,8 @@ async function startImport(){
   const btn = document.getElementById('impGo');
   btn.disabled = true; btn.textContent = 'Reading…';
   try{
+    validateCsvFile(usersFile);
+    if (licFile) validateCsvFile(licFile);
     const [ut, lt] = await Promise.all([readFile(usersFile), licFile ? readFile(licFile) : Promise.resolve('')]);
     const label = (usersFile.name || '').replace(/\.[a-z]+$/i, '') || 'Imported export';
     const r = runImport(ut, lt, label);

@@ -78,3 +78,32 @@ for (const scheme of ["light", "dark"]) {
     });
   });
 }
+
+for (const [label, usersName, usersType, licensesName, licensesType] of [
+  ['users extension', 'users.exe', 'text/csv', 'licenses.csv', 'text/csv'],
+  ['users MIME', 'users.csv', 'application/pdf', 'licenses.csv', 'text/csv'],
+  ['optional licenses', 'users.csv', 'text/csv', 'licenses.pdf', 'application/pdf'],
+]) {
+  test(`reject non-CSV ${label} before reading either file`, async ({ page }) => {
+    await page.evaluate(() => {
+      const Original = window.FileReader;
+      window.fileReads = 0;
+      window.FileReader = class extends Original {
+        constructor() { super(); window.fileReads++; }
+      };
+    });
+    await page.locator('#impUsers').setInputFiles({name:usersName,mimeType:usersType,buffer:Buffer.from(USERS_CSV)});
+    await page.locator('#impLic').setInputFiles({name:licensesName,mimeType:licensesType,buffer:Buffer.from(LICENSES_CSV)});
+    await page.locator('#impGo').click();
+    expect(await page.evaluate(() => window.fileReads)).toBe(0);
+    await expect(page.locator('#impErr')).toContainText('CSV');
+    await expect(page.locator('#impGo')).toBeEnabled();
+  });
+}
+
+test('CSV with uppercase extension and empty or plain-text MIME is accepted', async ({ page }) => {
+  await page.locator('#impUsers').setInputFiles({name:'users.CSV',mimeType:'',buffer:Buffer.from(USERS_CSV)});
+  await page.locator('#impLic').setInputFiles({name:'licenses.csv',mimeType:'text/plain',buffer:Buffer.from(LICENSES_CSV)});
+  await page.locator('#impGo').click();
+  await expect(page.locator('#again')).toBeVisible();
+});
