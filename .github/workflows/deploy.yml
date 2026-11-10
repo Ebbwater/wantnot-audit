@@ -14,6 +14,8 @@ on:
       - 'skus.json'
       - 'sort.js'
       - 'site.webmanifest'
+      - 'robots.txt'
+      - 'sitemap.xml'
       - 'staticwebapp.config.json'
       - 'tools/**'
       - 'fixtures/**'
@@ -33,6 +35,8 @@ on:
       - 'skus.json'
       - 'sort.js'
       - 'site.webmanifest'
+      - 'robots.txt'
+      - 'sitemap.xml'
       - 'staticwebapp.config.json'
       - 'tools/**'
       - 'fixtures/**'
@@ -59,6 +63,11 @@ jobs:
         with: { node-version: '22' }
       - name: Catalog drift gate
         run: python tools/sync_catalog.py --check
+
+      # The audit origin must serve its crawler files as files, not as the SPA
+      # index. Allow is an owner decision recorded on ebbwater/wantnot#158.
+      - name: Crawler files (robots and sitemap)
+        run: python tools/robots_check.py
 
       # Asserts the browser analyzer matches the backend contract snapshot —
       # finding keys, seats, money, confidence, waste totals, warning semantics.
@@ -123,7 +132,7 @@ jobs:
       - name: Check assets present
         run: |
           set -euo pipefail
-          for f in index.html audit_logic.js catalog.js kinds.js palette.css sort.js site.webmanifest; do
+          for f in index.html audit_logic.js catalog.js kinds.js palette.css sort.js site.webmanifest robots.txt sitemap.xml; do
             test -f "$f" || { echo "::error::$f missing"; exit 1; }
           done
           # index.html must load config.js before the inline script (same trap as wantnot)
