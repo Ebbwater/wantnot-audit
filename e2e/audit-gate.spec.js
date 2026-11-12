@@ -45,7 +45,7 @@ test.beforeEach(async ({ page }) => {
 
 test("REGRESSION the full report renders with no email and no storage primed", async ({ page }) => {
   const insightsCalls = [];
-  await page.route("**/api/audit/insights", (route) => {
+  await page.route(/\/api\/audit\/insights$/, (route) => {
     insightsCalls.push(route.request().postData() || "");
     return route.fulfill({ status: 400, contentType: "application/json", body: JSON.stringify(REFUSAL) });
   });
@@ -81,7 +81,7 @@ test("REGRESSION the full report renders with no email and no storage primed", a
 
 test("REGRESSION the AI-insights panel returns nothing until an email is supplied", async ({ page }) => {
   const posts = [];
-  await page.route("**/api/audit/insights", (route) => {
+  await page.route(/\/api\/audit\/insights$/, (route) => {
     const body = JSON.parse(route.request().postData() || "{}");
     posts.push(body.email || "");
     const ok = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test((body.email || "").trim());
@@ -113,7 +113,7 @@ test("REGRESSION the AI-insights panel returns nothing until an email is supplie
   // The API's own refusal still yields no content: the panel surfaces it and stays empty.
   // (Fixture answers 400 with the deployed body; the page must not render anything.)
   await page.fill("#wandaEmail", "visitor@example.test");
-  await page.route("**/api/audit/insights", (route) => route.fulfill({
+  await page.route(/\/api\/audit\/insights$/, (route) => route.fulfill({
     status: 400, contentType: "application/json", body: JSON.stringify(REFUSAL),
   }));
   await page.locator("#wandaGo").click();
@@ -122,7 +122,7 @@ test("REGRESSION the AI-insights panel returns nothing until an email is supplie
 
   // Positive control: with a valid address the panel does return content, so the
   // assertions above are about the gate and not about a panel that never works.
-  await page.route("**/api/audit/insights", (route) => route.fulfill({
+  await page.route(/\/api\/audit\/insights$/, (route) => route.fulfill({
     status: 200, contentType: "application/json",
     body: JSON.stringify({ reply: "FIXTURE NARRATIVE", source: "deterministic", grounded: true }),
   }));
