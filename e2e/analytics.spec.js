@@ -250,7 +250,27 @@ test.describe("analytics is inert with no site id (the shipped state)", () => {
     await page.goto("/");
     await page.waitForLoadState("load");
     const origin = new URL(page.url()).origin;
-    expect(scripts.filter((url) => new URL(url).origin !== origin))
+    // The product legitimately loads MSAL from alcdn.msauth.net for the
+    // optional sign-in. That is a known, allowlisted product dependency, not
+    // analytics. Asserting "no cross-origin script at all" passed only because
+    // the offline stubs fulfilled that request from a route handler; against a
+    // real preview it fails on MSAL while saying nothing about analytics.
+    //
+    // The property this case exists to protect is narrower and stronger: no
+    // third-party ANALYTICS script is fetched. Any other new cross-origin
+    // script still fails, because the allowlist below is explicit.
+    const ALLOWED_PRODUCT_SCRIPTS = [
+      "https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js",
+    ];
+    const crossOrigin = scripts.filter((url) => new URL(url).origin !== origin);
+    const unexpected = crossOrigin.filter((url) => !ALLOWED_PRODUCT_SCRIPTS.includes(url));
+    expect(unexpected, `unexpected cross-origin script(s): ${JSON.stringify(unexpected)}`)
+      .toEqual([]);
+    // And nothing that looks like an analytics vendor, regardless of allowlist.
+    const analyticsish = crossOrigin.filter((url) =>
+      /plausible|fathom|google-analytics|googletagmanager|umami|goatcounter|matomo|segment/i
+        .test(url));
+    expect(analyticsish, `analytics script fetched while inert: ${JSON.stringify(analyticsish)}`)
       .toEqual([]);
   });
 
