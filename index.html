@@ -23,6 +23,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="palette.css">
+<link rel="stylesheet" href="consent.css">
 <link rel="canonical" href="https://audit.wantnot.ebbwater.net/">
 <style>
 :root{
@@ -50,6 +51,15 @@ body{margin:0;background:var(--page);color:var(--ink);font-family:var(--ui);font
      line-height:1.55;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1120px;margin:0 auto;padding:0 28px 110px}
 @media(max-width:640px){.wrap{padding:0 16px 70px}}
+/* Page footer — the cookie-settings control lives here, so it is reachable
+   again after the first visit's banner is answered. */
+.foot{padding:36px 0 0;border-top:1px solid var(--line);margin-top:44px;
+  color:var(--ink-3-text);font-size:13px}
+.foot .fr{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.foot a{color:var(--ink-2);text-decoration:none}
+.foot a:hover{color:var(--ink)}
+.foot a:focus-visible{outline:2px solid var(--hot-text);outline-offset:2px}
+.foot-note{margin:14px 0 0;font-size:12px}
 
 /* ── shared nav ───────────────────────────────────────────────────── */
 .brand{font-family:var(--display);font-weight:800;font-size:17px;font-stretch:118%;
@@ -249,9 +259,20 @@ table.data tbody tr.grp-item td{border-bottom-color:var(--line-2)}
     <div class="auth"><a class="btn-audit active" href="/" aria-current="page">Instant Audit</a><a class="btn-signin" href="https://wantnot.ebbwater.net/dashboard">Customer Sign-in</a><span id="who" style="margin-left:6px"></span></div>
   </header>
   <main id="view" aria-live="polite"></main>
+  <footer class="foot">
+    <div class="fr">
+      <a href="https://wantnot.ebbwater.net/">WantNot</a>
+      <a href="https://wantnot.ebbwater.net/privacy">Privacy</a>
+      <a href="https://wantnot.ebbwater.net/terms">Terms</a>
+      <button type="button" data-consent-open>Cookie settings</button>
+    </div>
+    <p class="foot-note">Microsoft 365 licence waste analysis. Not affiliated with Microsoft.</p>
+  </footer>
 </div>
 
 <script src="config.js" onerror="window.__noConfig=true"></script>
+<script src="consent.js" defer></script>
+<script src="analytics.js" defer></script>
 <script src="sort.js"></script>
 <script src="catalog.js"></script>
 <script src="kinds.js"></script>
