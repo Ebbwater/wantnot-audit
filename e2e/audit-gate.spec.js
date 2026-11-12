@@ -21,6 +21,22 @@ const LICENSES_CSV = "License,Purchased,Assigned\r\nSPE_E3,7,4\r\n";
 
 // The deployed API's real refusal, quoted so the fixture cannot drift from it.
 const REFUSAL = { error: "Valid email is required to unlock insights" };
+// The page calls the Functions host cross-origin, so a real browser sends a
+// CORS preflight first. A stub that answers only POST leaves the preflight to
+// fail and the panel reports "Failed to fetch" instead of the refusal, which
+// passes on a headerless local server and fails on the deployed preview.
+const CORS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "POST, OPTIONS",
+  "access-control-allow-headers": "content-type",
+};
+const answer = (status, body) => ({
+  status,
+  contentType: "application/json",
+  headers: CORS,
+  body: JSON.stringify(body),
+});
+
 
 async function openAudit(page) {
   // A configured, signed-out boundary: the repo's config.js is a placeholder and
@@ -82,6 +98,9 @@ test("REGRESSION the full report renders with no email and no storage primed", a
 test("REGRESSION the AI-insights panel returns nothing until an email is supplied", async ({ page }) => {
   const posts = [];
   await page.route(/\/api\/audit\/insights$/, (route) => {
+    if (route.request().method() === "OPTIONS") {
+      return route.fulfill({ status: 204, headers: CORS, body: "" });
+    }
     const body = JSON.parse(route.request().postData() || "{}");
     posts.push(body.email || "");
     const ok = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test((body.email || "").trim());
@@ -113,19 +132,20 @@ test("REGRESSION the AI-insights panel returns nothing until an email is supplie
   // The API's own refusal still yields no content: the panel surfaces it and stays empty.
   // (Fixture answers 400 with the deployed body; the page must not render anything.)
   await page.fill("#wandaEmail", "visitor@example.test");
-  await page.route(/\/api\/audit\/insights$/, (route) => route.fulfill({
-    status: 400, contentType: "application/json", body: JSON.stringify(REFUSAL),
-  }));
+  await page.route(/\/api\/audit\/insights$/, (route) =>
+    route.request().method() === "OPTIONS"
+      ? route.fulfill({ status: 204, headers: CORS, body: "" })
+      : route.fulfill(answer(400, REFUSAL)));
   await page.locator("#wandaGo").click();
   await expect(page.locator("#wandaErr")).toHaveText(REFUSAL.error);
   await expect(page.locator("#wandaOut"), "an API refusal renders no insights").toBeHidden();
 
   // Positive control: with a valid address the panel does return content, so the
   // assertions above are about the gate and not about a panel that never works.
-  await page.route(/\/api\/audit\/insights$/, (route) => route.fulfill({
-    status: 200, contentType: "application/json",
-    body: JSON.stringify({ reply: "FIXTURE NARRATIVE", source: "deterministic", grounded: true }),
-  }));
+  await page.route(/\/api\/audit\/insights$/, (route) =>
+    route.request().method() === "OPTIONS"
+      ? route.fulfill({ status: 204, headers: CORS, body: "" })
+      : route.fulfill(answer(200, { reply: "FIXTURE NARRATIVE", source: "deterministic", grounded: true })));
   await page.locator("#wandaGo").click();
   await expect(page.locator("#wandaOut")).toBeVisible();
   await expect(page.locator("#wandaOut")).toContainText("FIXTURE NARRATIVE");
