@@ -34,6 +34,15 @@
 
 /* global document:readonly, window:readonly, navigator:readonly */
 const { test, expect } = require("@playwright/test");
+
+// Most cases here build a deploy checkout, spawn a fixture HTTP server and/or
+// wait on a synthetic network refusal before the browser settles. On a loaded
+// CI runner those cold paths have exceeded the 60 s suite default while
+// completing in about a second in isolation, and which case pays the cost moves
+// between runs. Give the file a larger budget than the default rather than
+// tuning one case at a time; no assertion is relaxed, only the time allowed to
+// reach it.
+test.setTimeout(180000);
 const fs = require("node:fs");
 const path = require("node:path");
 const os = require("node:os");
