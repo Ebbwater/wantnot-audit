@@ -97,6 +97,14 @@ run "committed CSP matches the shipped config" "$PYTHON" tools/analytics_csp.py 
 #    refused in production.
 run "analytics spec runs against a served CSP" "$PYTHON" tools/analytics_wiring_check.py --root .
 
+# 7b. The audit-gate spec must derive its fixture base from the SERVED config and
+#     assert that base is reachable. That suite already passed for the wrong reason
+#     once: its fixture route sat on an invented host the preview's CSP refuses
+#     before any route is consulted, so it was green locally and red on the
+#     preview. The negative control (e2e/negative-control.py) serves this checkout
+#     with the committed globalHeaders; this keeps the mechanisms in place.
+run "audit-gate spec derives its base from the served CSP" "$PYTHON" tools/audit_gate_wiring_check.py --root .
+
 # 8. The browser suites.
 if [ "$BROWSER" -eq 1 ]; then
   if [ -d node_modules/@playwright/test ]; then
