@@ -33,8 +33,25 @@ test.beforeEach(async ({ page }) => {
 
 async function expectContrast(page, state) {
   await page.evaluate(() => document.fonts.ready);
+  // Settle the paint before axe samples. axe's color-contrast rule reads
+  // rendered pixel colours, and under a dark `prefers-color-scheme` the token
+  // block flips after first paint: a sample taken mid-repaint reports blends
+  // (observed once in ~10 combined runs: `.lede` as #434850 on #0c0f14, values
+  // that exist nowhere in the source and sit between the light and dark token
+  // sets). Two animation frames plus a forced style/layout flush pins the
+  // measurement to the settled theme. This does not weaken the assertion —
+  // it still runs the same axe rule over the same DOM with the same thresholds;
+  // it only stops a transient paint state from being measured as if it were a
+  // colour choice.
+  await page.evaluate(() => new Promise((done) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      // Flush style + layout so the next paint is the settled one.
+      void document.body.offsetHeight;
+      done();
+    }));
+  }));
   await page.addScriptTag({ content: axeSource });
-  const violations = await page.evaluate(async () => {
+  const results = await page.evaluate(async () => {
     const results = await window.axe.run(document, { runOnly: ["color-contrast"] });
     return results.violations.flatMap((violation) => violation.nodes.map((node) => ({
       target: node.target,
@@ -42,7 +59,81 @@ async function expectContrast(page, state) {
       failureSummary: node.failureSummary,
     })));
   });
-  expect(violations, `${state}:\n${JSON.stringify(violations, null, 2)}`).toEqual([]);
+  expect(results, `${state}:\n${JSON.stringify(results, null, 2)}`).toEqual([]);
+
+  // The cookie banner is the one `position: fixed` overlay on this page, and
+  // axe returns its text as `incomplete` ("1:1 contrast ratio") because it
+  // cannot sample the backdrop beneath a fixed layer over a scrolling document.
+  // Reading only `violations` would report a pass for text axe never measured.
+  // So the banner's own pairs are computed here, from the rendered colours, and
+  // a pair below AA fails this gate — no axe involvement, no silent gap.
+  const banner = await page.evaluate(() => {
+    const region = document.querySelector("[data-consent]");
+    if (!region || region.hidden) return null;
+
+    const parse = (value) => {
+      const m = String(value).match(/rgba?\(([^)]+)\)/);
+      if (!m) return null;
+      const parts = m[1].split(",").map((n) => parseFloat(n));
+      return { r: parts[0], g: parts[1], b: parts[2], a: parts.length > 3 ? parts[3] : 1 };
+    };
+    const over = (fg, bg) => ({
+      r: fg.r * fg.a + bg.r * (1 - fg.a),
+      g: fg.g * fg.a + bg.g * (1 - fg.a),
+      b: fg.b * fg.a + bg.b * (1 - fg.a),
+      a: 1,
+    });
+    const lum = ({ r, g, b }) => {
+      const ch = (v) => {
+        const s = v / 255;
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+      };
+      return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+    };
+    const ratio = (a, b) => {
+      const la = lum(a), lb = lum(b);
+      return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+    };
+
+    const sheet = region.querySelector(".sheet");
+    const pageBg = parse(getComputedStyle(document.body).backgroundColor) ||
+      parse(getComputedStyle(document.documentElement).backgroundColor);
+    let sheetBg = parse(getComputedStyle(sheet).backgroundColor);
+    if (sheetBg && sheetBg.a < 1) sheetBg = over(sheetBg, pageBg);
+
+    const pairs = [];
+    const sample = (label, nodes) => {
+      nodes.forEach((node) => {
+        if (!node || !node.textContent.trim()) return;
+        const colour = parse(getComputedStyle(node).color);
+        if (!colour) return;
+        const fg = colour.a < 1 ? over(colour, sheetBg) : colour;
+        const size = parseFloat(getComputedStyle(node).fontSize);
+        const weight = parseInt(getComputedStyle(node).fontWeight, 10) || 400;
+        // WCAG AA: 3:1 for large text (>=24px, or >=18.66px bold), else 4.5:1.
+        const large = size >= 24 || (size >= 18.66 && weight >= 700);
+        pairs.push({
+          label,
+          text: node.textContent.trim().slice(0, 40),
+          ratio: Math.round(ratio(fg, sheetBg) * 100) / 100,
+          required: large ? 3 : 4.5,
+        });
+      });
+    };
+    sample("body copy", [region.querySelector(".say")]);
+    // The bold lead, the policy link and the two buttons carry their own
+    // colours, so each is measured rather than assumed to inherit a passing one.
+    sample("inline", [...region.querySelectorAll(".say b, .say a")]);
+    sample("buttons", [...region.querySelectorAll(".acts button")]);
+    return { pairs, sheetBg, pageBg };
+  });
+
+  if (banner) {
+    expect(banner.pairs.length, `${state}: the banner produced no measurable text`).toBeGreaterThan(2);
+    const failing = banner.pairs.filter((pair) => pair.ratio < pair.required);
+    expect(failing, `${state}: cookie banner contrast below AA:\n${JSON.stringify(failing, null, 2)}`)
+      .toEqual([]);
+  }
 }
 
 for (const scheme of ["light", "dark"]) {

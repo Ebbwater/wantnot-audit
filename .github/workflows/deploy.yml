@@ -11,6 +11,10 @@ on:
       - 'catalog.js'
       - 'kinds.js'
       - 'palette.css'
+      - 'consent.css'
+      - 'consent.js'
+      - 'analytics.js'
+      - 'config.js.example'
       - 'skus.json'
       - 'sort.js'
       - 'site.webmanifest'
@@ -32,6 +36,10 @@ on:
       - 'catalog.js'
       - 'kinds.js'
       - 'palette.css'
+      - 'consent.css'
+      - 'consent.js'
+      - 'analytics.js'
+      - 'config.js.example'
       - 'skus.json'
       - 'sort.js'
       - 'site.webmanifest'
@@ -86,6 +94,15 @@ jobs:
       - name: Rendered contrast — initial page and CSV report
         run: npm run test:contrast
 
+      # The analytics configured cases must run against a SERVED CSP header.
+      # `connect-src` is a document response header, so configuring a site id by
+      # stubbing config.js cannot exercise the launch path: the served document
+      # keeps its inert CSP, the beacon is refused, and the case passes only on a
+      # static server that sends no header at all. This asserts the fixture that
+      # prevents that is still wired.
+      - name: Analytics configured cases run against a served CSP
+        run: python tools/analytics_wiring_check.py --root .
+
       # config.js must stay a placeholder in the repo — the real client ID is
       # injected at deploy time. A GUID-shaped value committed here means someone
       # exported their working config; catch it before it reaches public history.
@@ -120,23 +137,51 @@ jobs:
             echo "AUDIT_CLIENT_ID not set — leaving placeholder config.js (fork/Dependabot skips deploy)"
           else
             API_BASE="${AUDIT_API_BASE:-https://func-wantnot-4dc52f.azurewebsites.net}"
+            # Analytics (GTM W3) ships inert: both values empty means no beacon,
+            # no request and no vendor code. Launching is these two values plus
+            # the CSP step below, which derives the grant from this same file.
+            ANALYTICS_PROVIDER=""
+            ANALYTICS_SITE=""
             cat > config.js <<JSCONFIG
           /* Generated at deploy — do not commit. WANTNOT_AUDIT_CLIENT_ID is a public identifier, not a secret; this app is a public client with no secret. */
           window.WANTNOT_AUDIT_CLIENT_ID = '${AUDIT_CLIENT_ID}';
           window.WANTNOT_API_BASE = '${API_BASE}';
+          window.WANTNOT_ANALYTICS = { provider: '${ANALYTICS_PROVIDER}', site: '${ANALYTICS_SITE}' };
           JSCONFIG
             echo "config.js injected (API base ${API_BASE})"
           fi
           grep -q "WANTNOT_AUDIT_CLIENT_ID" config.js || { echo "::error::config.js missing WANTNOT_AUDIT_CLIENT_ID"; exit 1; }
+          grep -q "WANTNOT_ANALYTICS" config.js || { echo "::error::config.js missing WANTNOT_ANALYTICS"; exit 1; }
+
+      # The analytics connect-src grant is derived here, from the config.js this
+      # job just wrote. Validation runs FIRST, so a bad configuration fails the
+      # deploy before anything is rewritten: an unknown provider refuses rather
+      # than shipping a beacon the CSP would block with no error anyone watches.
+      - name: Validate analytics configuration (fails before any rewrite)
+        run: python tools/analytics_csp.py --root .
+
+      # With no site id this writes nothing and the deployed CSP is
+      # byte-identical to the committed one; with a site id it adds exactly that
+      # one provider origin to connect-src and never touches script-src.
+      - name: Apply analytics CSP grant (no-op unless a site id is set)
+        run: python tools/analytics_csp.py --root . --write
+
+      - name: Verify the analytics CSP outcome matches the configured state
+        run: python tools/analytics_csp.py --root . --verify
 
       - name: Check assets present
         run: |
           set -euo pipefail
-          for f in index.html audit_logic.js catalog.js kinds.js palette.css sort.js site.webmanifest robots.txt sitemap.xml; do
+          for f in index.html audit_logic.js catalog.js kinds.js palette.css sort.js site.webmanifest robots.txt sitemap.xml consent.css consent.js analytics.js; do
             test -f "$f" || { echo "::error::$f missing"; exit 1; }
           done
           # index.html must load config.js before the inline script (same trap as wantnot)
           grep -Eq '<script[^>]+src=.?config[.]js' index.html || { echo "::error::index.html does not load config.js"; exit 1; }
+          # The consent seam must be live before the hook reads it, and config.js
+          # must be set before both. A page that loads the hook without the seam
+          # ships a beacon that can never fire, and says so only in a state value
+          # no operator is reading.
+          python tools/analytics_csp.py --root . --verify-wiring
 
       - name: Deploy to Static Web Apps
         id: swa

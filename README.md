@@ -76,18 +76,39 @@ cp config.js.example config.js
 No build step — `skip_app_build: true` in the deploy workflow.
 
 Rendered contrast checks cover the sign-in/import page, an imported CSV report,
-expanded findings, and a selected chart legend in both light and dark themes:
+expanded findings, and a selected chart legend in both light and dark themes.
+The analytics suite covers the inert default, one configured beacon, the consent
+gate, and the CSP grant (see [Analytics](#analytics)):
 
 ```bash
 npm ci
 npx playwright install chromium
-npm run test:contrast
+bash tools/check_all.sh            # everything, including both browser suites
+bash tools/check_all.sh --no-browser   # no Playwright binary needed
 ```
 
-The test starts a local server with `python3`; set `AUDIT_TEST_PYTHON` to a
-Python executable path if needed. Set `PREVIEW_URL` to check a deployed preview.
-These checks use synthetic CSVs and require no Microsoft sign-in or customer data.
-They gate deployment alongside catalog drift and analyzer parity.
+`tools/check_all.sh` is the local form of the deploy workflow's `checks` job:
+catalog drift, crawler files, analyzer parity, the analytics hook and CSP
+suites, and both browser suites. The browser tests start a local server with
+`python3`; set `AUDIT_TEST_PYTHON` to a Python executable path if needed. Set
+`PREVIEW_URL` to check a deployed preview. These checks use synthetic CSVs and
+require no Microsoft sign-in, no customer data and no network egress.
+
+## Analytics
+
+The page carries one provider-neutral pageview beacon and ships **inert**: no
+provider is chosen, so no request, no vendor code and no CSP change. Launching
+is a config edit plus a deploy-time CSP grant derived from that same config. The
+full procedure, the consent surface and the legal text that must land with a
+site id are in [docs/ANALYTICS.md](docs/ANALYTICS.md).
+
+Two independent properties are asserted on every gate run:
+
+- with no site id, no analytics request is made in a real browser (including
+  after the visitor accepts the cookie banner) and the committed CSP is
+  byte-identical to the deployed one;
+- with a test site id, exactly one beacon goes to the configured provider's
+  origin, and only after consent is `accept`.
 
 ## Deploying your own copy
 

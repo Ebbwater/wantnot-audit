@@ -1,0 +1,117 @@
+/* Cookie consent banner — the stylesheet for consent.js.
+ *
+ * Ported from `dashboard/consent.css` in ebbwater/wantnot (GTM W3, commit
+ * 38178b3) and re-based onto this page's token names. The marketing sheet
+ * leans on `--focus` and `--lift`, which the audit page does not define; here
+ * the focus ring uses `--hot-text` and the sheet's shadow uses the existing
+ * `--shadow`, so the banner reads as part of this page instead of inheriting
+ * two tokens that silently resolve to nothing.
+ *
+ * Colours come from the page's existing custom properties and never from a new
+ * literal, so the rendered contrast gate (e2e/contrast.spec.js, both themes)
+ * measures the banner exactly as it measures the rest of the page.
+ *
+ * position:fixed keeps the banner out of flow: it adds nothing to the audit
+ * form's layout, so answering or ignoring it cannot move the import controls
+ * under the visitor's cursor.
+ *
+ * Both answers are the same button: Accept and Reject carry identical weight,
+ * because a banner that nudges is a dark pattern whatever it says.
+ */
+
+[data-consent-open] {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink-2);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+[data-consent-open]:hover { color: var(--ink); }
+
+[data-consent-open]:focus-visible {
+  outline: 2px solid var(--hot-text);
+  outline-offset: 2px;
+}
+
+.consent {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  padding: 10px clamp(10px, 2.4vw, 24px) calc(10px + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+
+.consent[hidden] { display: none; }
+
+.consent .sheet {
+  pointer-events: auto;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1120px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  padding: 14px 18px;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm, 10px);
+  box-shadow: var(--shadow);
+}
+
+.consent .say {
+  flex: 1 1 22rem;
+  min-width: 0;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.consent .say b { color: var(--ink); font-weight: 600; }
+
+.consent .say a { color: var(--hot-text); text-decoration: underline; }
+
+.consent .acts {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.consent .acts button {
+  box-sizing: border-box;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px 22px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm, 10px);
+  cursor: pointer;
+}
+
+.consent .acts button:hover { border-color: var(--ink-2); }
+
+.consent .acts button:focus-visible {
+  outline: 2px solid var(--hot-text);
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .consent .acts { width: 100%; margin-left: 0; }
+  .consent .acts button { flex: 1 1 0; }
+}
