@@ -77,6 +77,11 @@ jobs:
       - name: Crawler files (robots and sitemap)
         run: python tools/robots_check.py
 
+      # Social-preview metadata (#7): a relative og:image or a missing og:url
+      # renders a bare share card and is invisible in a browser.
+      - name: Social metadata (og image and url)
+        run: python tools/social_meta_check.py
+
       # Asserts the browser analyzer matches the backend contract snapshot —
       # finding keys, seats, money, confidence, waste totals, warning semantics.
       # Runs the Node runner internally; the snapshot is fixtures/parity_expected.json,

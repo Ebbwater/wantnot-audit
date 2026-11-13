@@ -69,6 +69,10 @@ run "catalog drift" "$PYTHON" tools/sync_catalog.py --check
 #    files, not the SPA index.
 run "crawler files" "$PYTHON" tools/robots_check.py
 
+# 2b. Social-preview metadata (#7) — a share card renders from these tags, and a
+#     relative og:image or a missing og:url is invisible in a browser.
+run "social metadata" "$PYTHON" tools/social_meta_check.py
+
 # 3. Browser/backend parity — the free audit must not quote a figure the
 #    backend would contradict.
 run "parity" "$PYTHON" tools/parity_check.py
