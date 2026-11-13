@@ -1,0 +1,37 @@
+# Tear down a PR's preview environment when the PR closes.
+#
+# Why this is its own workflow rather than a job in deploy.yml: that workflow
+# filters both `push` and `pull_request` by `paths`, and a `closed` event is
+# subject to the same filter. A PR that only touched `.md` or `brand/**` would
+# therefore never dispatch the teardown, leak its staging environment, and
+# contribute to the Free plan's 3-slot cap. This workflow has no path filter,
+# so every closed PR releases its slot.
+#
+# The `close` action is idempotent: it succeeds whether or not the environment
+# still exists, so a PR whose preview never deployed (for example, the one that
+# hit the cap) closes cleanly.
+name: Close PR preview
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  close_preview:
+    runs-on: ubuntu-latest
+    name: Tear down PR preview
+    # A fork PR never received the deploy secret, so it cannot have created an
+    # environment and there is nothing to close. Skipping keeps the secret from
+    # being requested for a run that has no work to do.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Close the preview environment
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AUDIT }}
+          action: close
