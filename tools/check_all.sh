@@ -69,6 +69,9 @@ run "catalog drift" "$PYTHON" tools/sync_catalog.py --check
 #    files, not the SPA index.
 run "crawler files" "$PYTHON" tools/robots_check.py
 
+# 2b. Workflow routing — deploy must use the pinned client, not the Docker action.
+run "workflow routing" "$PYTHON" tools/workflow_routing_test.py
+
 # 3. Browser/backend parity — the free audit must not quote a figure the
 #    backend would contradict.
 run "parity" "$PYTHON" tools/parity_check.py
