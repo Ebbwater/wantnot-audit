@@ -60,6 +60,12 @@ permissions:
   contents: read
   pull-requests: write
 
+env:
+  # Pinned Azure Static Web Apps client. The download fallback keeps the
+  # CI_RUNNER rollback working on GitHub-hosted runners, where /opt/swa is absent.
+  SWA_CLIENT_BUILD: a58ffd5ddfced557500b295844f2490acc313951
+  SWA_CLIENT_SHA256: 0a3c8166b05fa427ed57386d9ba3d82d4f3f3e4f66fabc26c1f934fa705458fa
+
 jobs:
   checks:
     runs-on: ${{ vars.CI_RUNNER && fromJSON(vars.CI_RUNNER) || 'ubuntu-latest' }}
@@ -209,8 +215,14 @@ jobs:
           INPUT_SKIP_APP_BUILD: 'true'
           INPUT_SKIP_DEPLOY_ON_MISSING_SECRETS: 'true'
         run: |
-          test -x /opt/swa/StaticSitesClient || { echo "::error::runner image is missing /opt/swa/StaticSitesClient"; exit 1; }
-          /opt/swa/StaticSitesClient upload
+          client=/opt/swa/StaticSitesClient
+          if [ ! -x "$client" ]; then
+            client="${RUNNER_TEMP:-/tmp}/StaticSitesClient"
+            curl -fsSL -o "$client" "https://swalocaldeployv2-bndtgugjgqc3dhdx.b01.azurefd.net/downloads/${SWA_CLIENT_BUILD}/linux/StaticSitesClient"
+            echo "${SWA_CLIENT_SHA256}  $client" | sha256sum -c -
+            chmod 0755 "$client"
+          fi
+          "$client" upload
 
   preview_contrast:
     needs: deploy
@@ -234,13 +246,20 @@ jobs:
         run: npm run test:contrast
 
   close_preview:
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ${{ vars.CI_RUNNER && fromJSON(vars.CI_RUNNER) || 'ubuntu-latest' }}
+    timeout-minutes: 10
     name: Tear down PR preview
     steps:
       - name: Tear down PR preview
         env:
           INPUT_AZURE_STATIC_WEB_APPS_API_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AUDIT }}
         run: |
-          test -x /opt/swa/StaticSitesClient || { echo "::error::runner image is missing /opt/swa/StaticSitesClient"; exit 1; }
-          /opt/swa/StaticSitesClient close
+          client=/opt/swa/StaticSitesClient
+          if [ ! -x "$client" ]; then
+            client="${RUNNER_TEMP:-/tmp}/StaticSitesClient"
+            curl -fsSL -o "$client" "https://swalocaldeployv2-bndtgugjgqc3dhdx.b01.azurefd.net/downloads/${SWA_CLIENT_BUILD}/linux/StaticSitesClient"
+            echo "${SWA_CLIENT_SHA256}  $client" | sha256sum -c -
+            chmod 0755 "$client"
+          fi
+          "$client" close
