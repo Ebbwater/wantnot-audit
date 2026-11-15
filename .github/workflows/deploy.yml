@@ -30,6 +30,7 @@ on:
       - '.github/workflows/deploy.yml'
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, closed]
     paths:
       - 'index.html'
       - 'audit_logic.js'
