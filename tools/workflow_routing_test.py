@@ -26,6 +26,8 @@ def main() -> None:
     assert "test -x /opt/swa/StaticSitesClient" in deploy_job
     assert "INPUT_AZURE_STATIC_WEB_APPS_API_TOKEN" in deploy_job
     assert "INPUT_SKIP_DEPLOY_ON_MISSING_SECRETS" in deploy_job
+    assert "Package the static site for upload" in deploy_job
+    assert "INPUT_APP_LOCATION: 'swa-site'" in deploy_job
     close_job = job_block(deploy, "close_preview")
     assert "/opt/swa/StaticSitesClient close" in close_job
     assert "test -x /opt/swa/StaticSitesClient" in close_job
