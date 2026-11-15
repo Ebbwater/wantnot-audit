@@ -130,6 +130,9 @@ jobs:
       - uses: actions/checkout@v7
         with: { submodules: false, lfs: false }
 
+      - uses: actions/setup-python@v7
+        with: { python-version: '3.13' }
+
       - name: Inject config.js from secret (audit app only)
         env:
           AUDIT_CLIENT_ID: ${{ secrets.AUDIT_CLIENT_ID }}
