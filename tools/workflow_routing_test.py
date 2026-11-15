@@ -18,6 +18,7 @@ def job_block(text: str, job: str) -> str:
 
 def main() -> None:
     deploy = (ROOT / ".github/workflows/deploy.yml").read_text()
+    assert "types: [opened, synchronize, reopened, closed]" in deploy, "closed trigger missing"
     for job in ("checks", "deploy", "preview_contrast", "close_preview"):
         assert f"runs-on: {SWITCH}" in job_block(deploy, job), job
     assert "Azure/static-web-apps-deploy" not in deploy
